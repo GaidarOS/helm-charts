@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "stump_chart.fullname" . }}
+  namespace: {{ include  "stump.namespace" . }}
+  labels:
+    {{- include "stump_chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "stump_chart.selectorLabels" . | nindent 4 }}

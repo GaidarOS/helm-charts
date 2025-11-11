@@ -1,0 +1,11 @@
+apiVersion: v2
+name: Stump
+kubeVersion: ">=1.25.0-0"
+description: A Helm chart for Stump, a free and open source comics, manga and digital book server with OPDS support
+
+home: https://github.com/stumpapp/stump
+icon: https://github.com/stumpapp/stump/raw/main/.github/images/logo.png
+
+type: application
+version: 0.1.0
+appVersion: "0.0.12"
