@@ -76,40 +76,23 @@ Set's up the volumeClaimTemplates when data or audit storage is required.  HA
 might not use data storage since Consul is likely it's backend, however, audit
 storage might be desired by the user.
 */}}
-{{- define "openbao.volumeclaims" -}}
+{{- define "stump.volumeclaims" -}}
   volumeClaimTemplates:
-      {{- if and (eq (.Values.server.dataStorage.enabled | toString) "true") (or (eq .mode "standalone") (eq (.Values.server.ha.raft.enabled | toString ) "true" )) }}
+      {{- if (eq (.Values.stump.dataStorage.enabled | toString) "true") }}
     - apiVersion: v1
       kind: PersistentVolumeClaim
       metadata:
         name: data
-        {{- include "openbao.dataVolumeClaim.annotations" . | nindent 6 }}
-        {{- include "openbao.dataVolumeClaim.labels" . | nindent 6 }}
+        {{- include "stump.dataVolumeClaim.annotations" . | nindent 6 }}
+        {{- include "stump.dataVolumeClaim.labels" . | nindent 6 }}
       spec:
         accessModes:
-          - {{ .Values.server.dataStorage.accessMode | default "ReadWriteOnce" }}
+          - {{ .Values.stump.dataStorage.accessMode | default "ReadWriteOnce" }}
         resources:
           requests:
-            storage: {{ .Values.server.dataStorage.size }}
-          {{- if .Values.server.dataStorage.storageClass }}
-        storageClassName: {{ .Values.server.dataStorage.storageClass }}
-          {{- end }}
-      {{ end }}
-      {{- if eq (.Values.server.auditStorage.enabled | toString) "true" }}
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: audit
-        {{- include "openbao.auditVolumeClaim.annotations" . | nindent 6 }}
-        {{- include "openbao.auditVolumeClaim.labels" . | nindent 6 }}
-      spec:
-        accessModes:
-          - {{ .Values.server.auditStorage.accessMode | default "ReadWriteOnce" }}
-        resources:
-          requests:
-            storage: {{ .Values.server.auditStorage.size }}
-          {{- if .Values.server.auditStorage.storageClass }}
-        storageClassName: {{ .Values.server.auditStorage.storageClass }}
+            storage: {{ .Values.stump.dataStorage.size }}
+          {{- if .Values.stump.dataStorage.storageClass }}
+        storageClassName: {{ .Values.stump.dataStorage.storageClass }}
           {{- end }}
       {{ end }}
 {{- end -}}
