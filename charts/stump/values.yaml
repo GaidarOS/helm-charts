@@ -68,7 +68,7 @@ ingress:
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: {{ .Values.stump.domain }}
+    - host: stump.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific

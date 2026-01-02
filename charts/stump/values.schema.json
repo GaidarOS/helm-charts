@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/schema#",
+  "type": "object",
+  "title": "Values",
+  "additionalProperties": false,
+  "properties": {
+    "replicaCount": {
+      "type": "number"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository",
+        "pullPolicy",
+        "tag"
+      ]
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {}
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "automount": {
+          "type": "boolean"
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "create",
+        "automount",
+        "annotations",
+        "name"
+      ]
+    },
+    "stump": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "string"
+        },
+        "env": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "required": [
+        "domain",
+        "env"
+      ]
+    },
+    "podAnnotations": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "podLabels": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "securityContext": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "port": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "port"
+      ]
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "pathType": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "pathType"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "host",
+              "paths"
+            ]
+          }
+        },
+        "tls": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "required": [
+        "enabled",
+        "className",
+        "annotations",
+        "hosts",
+        "tls"
+      ]
+    },
+    "httpRoute": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "annotations": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        },
+        "parentRefs": {
+          "type": "array",
+          "items": {}
+        },
+        "hostnames": {
+          "type": "array",
+          "items": {}
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "matches": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "value"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "path"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "matches"
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled",
+        "labels",
+        "annotations",
+        "parentRefs",
+        "hostnames",
+        "rules"
+      ]
+    },
+    "resources": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "livenessProbe": {
+      "type": "object",
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "port": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "port"
+          ]
+        }
+      },
+      "required": [
+        "httpGet"
+      ]
+    },
+    "readinessProbe": {
+      "type": "object",
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "port": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "port"
+          ]
+        }
+      },
+      "required": [
+        "httpGet"
+      ]
+    },
+    "volumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "configMap": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "configMap"
+        ]
+      }
+    },
+    "volumeMounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mountPath": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "mountPath"
+        ]
+      }
+    },
+    "nodeSelector": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "tolerations": {
+      "type": "array",
+      "items": {}
+    },
+    "affinity": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "required": [
+    "replicaCount",
+    "image",
+    "stump",
+    "service",
+    "volumes",
+    "volumeMounts"
+  ]
+}

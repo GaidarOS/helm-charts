@@ -10,9 +10,6 @@ tests:
   - it: should create HTTPRoute when enabled
     set:
       httpRoute.enabled: true
-      httpRoute.parentRefs:
-        - name: my-gateway
-          namespace: gateway-system
       httpRoute.rules:
         - matches:
             - path:
@@ -34,8 +31,6 @@ tests:
       httpRoute.enabled: true
       httpRoute.annotations:
         my-annotation: my-value
-      httpRoute.parentRefs:
-        - name: my-gateway
       httpRoute.rules:
         - matches:
             - path:
@@ -155,8 +150,6 @@ tests:
   - it: should support multiple matches in single rule
     set:
       httpRoute.enabled: true
-      httpRoute.parentRefs:
-        - name: my-gateway
       httpRoute.rules:
         - matches:
             - path:
@@ -180,13 +173,6 @@ tests:
     set:
       httpRoute.enabled: true
       service.port: 10801
-      httpRoute.parentRefs:
-        - name: my-gateway
-      httpRoute.rules:
-        - matches:
-            - path:
-                type: PathPrefix
-                value: /
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].port
