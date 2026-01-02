@@ -4,7 +4,10 @@ metadata:
   name: {{ include "stump_chart.fullname" . }}
   namespace: {{ include  "stump.namespace" . }}
   labels:
-    {{- include "stump_chart.labels" . | nindent 4 }}
+  {{- include "stump_chart.labels" . | nindent 4 }}
+  {{- with .Values.service.labels }}
+      {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   ports:

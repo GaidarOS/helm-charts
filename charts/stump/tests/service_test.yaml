@@ -1,0 +1,51 @@
+suite: test service
+templates:
+  - service.yaml
+tests:
+  - it: should create the service by default
+    set:
+      service:
+        port: 8080
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-stump
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports[0].port
+          value: 8080
+
+  - it: should create a LoadBalancer
+    set:
+      service:
+        type: LoadBalancer
+        port: 8080
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+      - isAPIVersion:
+          of: v1
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+
+  - it: should add custom labels
+    set:
+      service:
+        labels:
+          custom-label: foobar
+    asserts:
+      - equal:
+          path: metadata.labels["custom-label"]
+          value: foobar
+
