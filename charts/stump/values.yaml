@@ -1,156 +1,411 @@
-# Default values for stump_chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# =============================================================================
+# Stump Helm values
+# =============================================================================
 
-# This will set the deployment count
 replicaCount: 1
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
+  # Use the Stump image you want to deploy.
   repository: aaronleopold/stump
-  # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+
+  # Recommended: pin this to a Stump release rather than using latest.
   tag: ""
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  pullPolicy: IfNotPresent
+
 imagePullSecrets: []
-# This is to override the chart name.
+
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+# =============================================================================
+# Stump configuration
+#
+# These values are rendered into Stump.toml.
+#
+# Environment variables supplied through env/envFrom have higher precedence
+# than values in Stump.toml.
+# =============================================================================
 
-stump:
-  domain: "stump.example.com"
-
-  env: []
-
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-podLabels: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
-service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  labels: {}
-  type: ClusterIP
+config:
+  ip: "0.0.0.0"
   port: 10801
 
-# Stump ingress configuration
+  verbosity: 1
+  prettyLogs: true
+  colorfulLogs: false
+
+  # Optional custom SQLite database path.
+  dbPath: ""
+
+  dbTimeoutSecs: 30
+
+  clientDir: "/app/client"
+  configDir: "/config"
+
+  allowedOrigins: []
+
+  # The official Stump image provides PDFium at this location.
+  pdfiumPath: "/usr/local/lib/libpdfium.so"
+
+  enablePlayground: false
+  enableKoreaderSync: false
+  enableKoboSync: false
+  enableOpdsProgression: false
+
+  passwordHashCost: 12
+
+  sessionTtl: 259200
+  accessTokenTtl: 86400
+  refreshTokenTtl: 2592000
+  expiredSessionCleanupInterval: 86400
+
+  parallelismMultiplier: 2
+
+  maxImageUploadSize: 20971520
+  enableUpload: false
+  maxFileUploadSize: 20971520
+
+  pdfRenderDpi: 150
+  pdfMaxDimension: 1200
+  pdfRenderFormat: webp
+  pdfCachePages: true
+  pdfPrerenderRange: 5
+  pdfHighQuality: true
+
+  trustProxyHeaders: false
+
+# =============================================================================
+# OIDC
+#
+# OIDC credentials should normally be supplied through a Secret rather than
+# putting them in this values file.
+#
+# The corresponding environment variables are:
+#
+# STUMP_OIDC_ENABLED
+# STUMP_OIDC_CLIENT_ID
+# STUMP_OIDC_ISSUER_URL
+# STUMP_OIDC_CLIENT_SECRET
+# STUMP_OIDC_SCOPES
+# STUMP_OIDC_ALLOW_REGISTRATION
+# STUMP_OIDC_DISABLE_LOCAL_AUTH
+# STUMP_OIDC_EXTRA_AUDIENCES
+# STUMP_OIDC_CA_CERT_FILE
+#
+# =============================================================================
+
+oidc:
+  enabled: false
+
+  # Non-secret OIDC configuration can optionally be supplied here.
+  #
+  # If these are set, the StatefulSet receives them as environment variables.
+  #
+  clientId: ""
+  issuerUrl: ""
+  scopes:
+    - openid
+    - email
+    - profile
+
+  allowRegistration: true
+  disableLocalAuth: false
+
+  extraAudiences: []
+
+  # Optional path inside the container to a CA certificate.
+  caCertFile: ""
+
+  # Secret containing sensitive OIDC credentials.
+  #
+  # Expected keys:
+  #   clientSecret
+  #
+  # The chart maps:
+  #   clientSecret -> STUMP_OIDC_CLIENT_SECRET
+  #
+  existingSecret: ""
+
+  existingSecretKeys:
+    clientSecret: clientSecret
+
+# =============================================================================
+# Arbitrary environment variables
+# =============================================================================
+
+# Plain environment variables.
+#
+# Example:
+#
+# extraEnv:
+#   - name: STUMP_ENABLE_UPLOAD
+#     value: "true"
+#
+extraEnv: []
+
+# Import every key in an existing Secret as an environment variable.
+#
+# This is particularly useful if you want a Secret containing:
+#
+#   STUMP_OIDC_CLIENT_ID
+#   STUMP_OIDC_ISSUER_URL
+#   STUMP_OIDC_CLIENT_SECRET
+#   STUMP_SOME_OTHER_SETTING
+#
+# and don't want the chart to know about each individual key.
+extraEnvFromSecrets: []
+
+# Import every key in an existing ConfigMap as an environment variable.
+extraEnvFromConfigMaps: []
+
+# Individual environment variables sourced from Kubernetes Secrets or
+# ConfigMaps.
+#
+# Example:
+#
+# secretEnv:
+#   - name: STUMP_OIDC_CLIENT_SECRET
+#     secretKeyRef:
+#       name: stump-oidc
+#       key: clientSecret
+#
+secretEnv: []
+
+configMapEnv: []
+
+# =============================================================================
+# Service
+# =============================================================================
+
+service:
+  type: ClusterIP
+  port: 10801
+  targetPort: http
+
+  annotations: {}
+
+  # Optional:
+  # clusterIP: ""
+
+  # Optional:
+  # loadBalancerIP: ""
+
+  # Optional:
+  # externalTrafficPolicy: Cluster
+
+# =============================================================================
+# Ingress
+# =============================================================================
+
 ingress:
   enabled: false
+
   className: ""
-  labels: {}
+
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
+
   hosts:
     - host: stump.example.com
       paths:
         - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: stump-tls
-  #    hosts:
-  #      - stump.example.com
+          pathType: Prefix
 
-# Gateway API HTTPRoute configuration
-# NOTE: Gateway API support is in EXPERIMENTAL status
-# Support depends on your Gateway controller implementation
-# Some controllers may require additional configuration (e.g., BackendTLSPolicy for HTTPS backends)
-# Refer to https://gateway-api.sigs.k8s.io/implementations/ for controller-specific details
+  tls: []
+  # Example:
+  #
+  # tls:
+  #   - secretName: stump-tls
+  #     hosts:
+  #       - stump.example.com
+
+# =============================================================================
+# Gateway API HTTPRoute
+# =============================================================================
+
 httpRoute:
-  # -- Enable HTTPRoute resource for Stump (Gateway API)
   enabled: false
-  # -- Additional HTTPRoute labels
-  labels: {}
-  # -- Additional HTTPRoute annotations
-  annotations: {}
-  # -- Gateway API parentRefs for the HTTPRoute
-  ## Must reference an existing Gateway
-  # @default -- `[]` (See [values.yaml])
-  parentRefs: []
-    # - name: example-gateway
-    #   namespace: example-gateway-namespace
-    #   sectionName: https
-  # -- List of hostnames for the HTTPRoute
-  # @default -- `[]` (See [values.yaml])
-  hostnames: []
-    # - stump.example.com
-  # -- HTTPRoute rules configuration
-  # @default -- `[]` (See [values.yaml])
+
+  parentRefs:
+    - name: gateway
+      # namespace: ""
+      # sectionName: https
+
+  hostnames:
+    - stump.example.com
+
   rules:
     - matches:
         - path:
             type: PathPrefix
             value: /
-      # filters: []
-      #   - type: RequestHeaderModifier
-      #     requestHeaderModifier:
-      #       add:
-      #         - name: X-Custom-Header
-      #           value: custom-value
+
+# =============================================================================
+# Persistence
+# =============================================================================
+
+persistence:
+  config:
+    enabled: true
+
+    accessModes:
+      - ReadWriteOnce
+
+    size: 10Gi
+
+    storageClass: ""
+
+    annotations: {}
+
+    # Set an existing PVC instead of creating one.
+    existingClaim: ""
+
+  data:
+    enabled: true
+
+    accessModes:
+      - ReadWriteOnce
+
+    size: 1Ti
+
+    storageClass: ""
+
+    annotations: {}
+
+    existingClaim: ""
+
+# =============================================================================
+# Probes
+# =============================================================================
+
+probes:
+  liveness:
+    enabled: true
+    path: /api/v2/ping
+    initialDelaySeconds: 10
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  readiness:
+    enabled: true
+    path: /api/v2/ping
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+
+  startup:
+    enabled: true
+    path: /api/v2/ping
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 60
+    successThreshold: 1
+
+# =============================================================================
+# Resources
+# =============================================================================
 
 resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
-livenessProbe:
-  httpGet:
-    path: /
-    port: http
-readinessProbe:
-  httpGet:
-    path: /
-    port: http
+# Example:
+#
+# resources:
+#   requests:
+#     cpu: 250m
+#     memory: 512Mi
+#   limits:
+#     cpu: "2"
+#     memory: 2Gi
 
-# Additional volumes on the output Deployment definition.
-volumes:
-  - name: styles
-    configMap:
-      name: stump-styles-cm
-  # - name: styles
-  # configMap:
-  #   name: stump-config-toml
-  #   optional: true
+# =============================================================================
+# Security
+# =============================================================================
 
-# Additional volumeMounts on the output Deployment definition.
-volumeMounts:
-  - name: extensions
-    mountPath: /tmp/extensions/
+podSecurityContext:
+  fsGroup: 1000
+  # fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  # allowPrivilegeEscalation: false
+  # capabilities:
+  #   drop:
+  #     - ALL
+  readOnlyRootFilesystem: false
+
+# =============================================================================
+# Service account
+# =============================================================================
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# =============================================================================
+# Pod metadata
+# =============================================================================
+
+podAnnotations: {}
+podLabels: {}
+
+# =============================================================================
+# Scheduling
+# =============================================================================
 
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
+
+topologySpreadConstraints: []
+
+priorityClassName: ""
+
+# =============================================================================
+# StatefulSet
+# =============================================================================
+
+podManagementPolicy: OrderedReady
+
+updateStrategy:
+  type: RollingUpdate
+
+revisionHistoryLimit: 10
+
+terminationGracePeriodSeconds: 30
+
+# =============================================================================
+# Networking
+# =============================================================================
+
+dnsPolicy: ClusterFirst
+
+dnsConfig: {}
+
+hostNetwork: false
+
+# =============================================================================
+# Extra volumes
+# =============================================================================
+
+extraVolumes: []
+
+extraVolumeMounts: []
+
+# =============================================================================
+# Init containers
+# =============================================================================
+
+initContainers: []
+
+# =============================================================================
+# Pod-level environment
+# =============================================================================
+
+hostAliases: []

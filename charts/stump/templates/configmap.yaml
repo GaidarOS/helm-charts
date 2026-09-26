@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "stump.fullname" . }}
+  namespace: {{ include  "stump.namespace" . }}
+  labels:
+    {{- include "stump.labels" . | nindent 4 }}
+data:
+  Stump.toml: |
+    ip = {{ .Values.config.ip | quote }}
+    port = {{ .Values.config.port }}
+    verbosity = {{ .Values.config.verbosity }}
+    pretty_logs = {{ .Values.config.prettyLogs }}
+    colorful_logs = {{ .Values.config.colorfulLogs }}
+    {{- if .Values.config.dbPath }}
+    db_path = {{ .Values.config.dbPath | quote }}
+    {{- end }}
+    db_timeout_secs = {{ .Values.config.dbTimeoutSecs }}
+    client_dir = {{ .Values.config.clientDir | quote }}
+    config_dir = {{ .Values.config.configDir | quote }}
+    {{- if .Values.config.allowedOrigins }}
+    allowed_origins = [
+      {{- range .Values.config.allowedOrigins }}
+      {{ . | quote }},
+      {{- end }}
+    ]
+    {{- else }}
+    allowed_origins = []
+    {{- end }}
+    {{- if .Values.config.pdfiumPath }}
+    pdfium_path = {{ .Values.config.pdfiumPath | quote }}
+    {{- end }}
+    enable_playground = {{ .Values.config.enablePlayground }}
+    enable_koreader_sync = {{ .Values.config.enableKoreaderSync }}
+    enable_kobo_sync = {{ .Values.config.enableKoboSync }}
+    enable_opds_progression = {{ .Values.config.enableOpdsProgression }}
+    password_hash_cost = {{ .Values.config.passwordHashCost }}
+    session_ttl = {{ .Values.config.sessionTtl }}
+    access_token_ttl = {{ .Values.config.accessTokenTtl }}
+    refresh_token_ttl = {{ int64 .Values.config.refreshTokenTtl }}
+    expired_session_cleanup_interval = {{ .Values.config.expiredSessionCleanupInterval }}
+    parallelism_multiplier = {{ .Values.config.parallelismMultiplier }}
+    max_image_upload_size = {{ int64 .Values.config.maxImageUploadSize }}
+    enable_upload = {{ .Values.config.enableUpload }}
+    max_file_upload_size = {{ int64 .Values.config.maxFileUploadSize }}
+    pdf_render_dpi = {{ .Values.config.pdfRenderDpi }}
+    pdf_max_dimension = {{ .Values.config.pdfMaxDimension }}
+    pdf_render_format = {{ .Values.config.pdfRenderFormat | quote }}
+    pdf_cache_pages = {{ .Values.config.pdfCachePages }}
+    pdf_prerender_range = {{ .Values.config.pdfPrerenderRange }}
+    pdf_high_quality = {{ .Values.config.pdfHighQuality }}
+    trust_proxy_headers = {{ .Values.config.trustProxyHeaders }}

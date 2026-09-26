@@ -1,74 +1,57 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "stump_chart.fullname" . }}
+  name: {{ include "stump.fullname" . }}
   namespace: {{ include  "stump.namespace" . }}
   labels:
-    {{- include "stump_chart.labels" . | nindent 4 }}
+    {{- include "stump.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "stump.fullname" . }}
   replicas: {{ .Values.replicaCount }}
+
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
+
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+
   selector:
     matchLabels:
-      {{- include "stump_chart.selectorLabels" . | nindent 6 }}
+      {{- include "stump.selectorLabels" . | nindent 6 }}
+
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       labels:
-        {{- include "stump_chart.labels" . | nindent 8 }}
+        {{- include "stump.selectorLabels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+      annotations:
+        # The checksum/config annotation should deliberately causes Helm upgrades to roll the StatefulSet
+        # so the new file gets mounted
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
+      serviceAccountName: {{ include "stump.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "stump_chart.serviceAccountName" . }}
-      {{- with .Values.podSecurityContext }}
-      securityContext:
+      {{- with .Values.hostAliases }}
+      hostAliases:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      containers:
-        - name: {{ .Chart.Name }}
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.stump.env }}
-          env:
-            - name: PUID
-              value: 1000
-            - name: PGID
-              value: 1000
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
-          {{- with .Values.livenessProbe }}
-          livenessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.readinessProbe }}
-          readinessProbe:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.volumeMounts }}
-          volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
-      volumes:
+      {{- if .Values.hostNetwork }}
+      hostNetwork: true
+      {{- end }}
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}
@@ -83,4 +66,249 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{ template "stump.volumeclaims" . }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: stump
+          image: {{ include "stump.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.config.port }}
+              protocol: TCP
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: STUMP_CONFIG_DIR
+              value: {{ .Values.config.configDir | quote }}
+            - name: STUMP_CLIENT_DIR
+              value: {{ .Values.config.clientDir | quote }}
+            - name: STUMP_PORT
+              value: {{ .Values.config.port | quote }}
+            - name: STUMP_IN_DOCKER
+              value: "true"
+            {{- if .Values.oidc.enabled }}
+            - name: STUMP_OIDC_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.oidc.clientId }}
+            - name: STUMP_OIDC_CLIENT_ID
+              value: {{ .Values.oidc.clientId | quote }}
+            {{- end }}
+            {{- if .Values.oidc.issuerUrl }}
+            - name: STUMP_OIDC_ISSUER_URL
+              value: {{ .Values.oidc.issuerUrl | quote }}
+            {{- end }}
+            {{- if .Values.oidc.scopes }}
+            - name: STUMP_OIDC_SCOPES
+              value: {{ join "," .Values.oidc.scopes | quote }}
+            {{- end }}
+            - name: STUMP_OIDC_ALLOW_REGISTRATION
+              value: {{ .Values.oidc.allowRegistration | quote }}
+            - name: STUMP_OIDC_DISABLE_LOCAL_AUTH
+              value: {{ .Values.oidc.disableLocalAuth | quote }}
+            {{- if .Values.oidc.extraAudiences }}
+            - name: STUMP_OIDC_EXTRA_AUDIENCES
+              value: {{ join "," .Values.oidc.extraAudiences | quote }}
+            {{- end }}
+            {{- if .Values.oidc.caCertFile }}
+            - name: STUMP_OIDC_CA_CERT_FILE
+              value: {{ .Values.oidc.caCertFile | quote }}
+            {{- end }}
+            {{- if .Values.oidc.existingSecret }}
+            - name: STUMP_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.oidc.existingSecret }}
+                  key: {{ .Values.oidc.existingSecretKeys.clientSecret }}
+                  optional: false
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+            {{- with .Values.secretEnv }}
+            {{- range . }}
+            - name: {{ .name }}
+              valueFrom:
+                {{- if .secretKeyRef }}
+                secretKeyRef:
+                  {{- toYaml .secretKeyRef | nindent 18 }}
+                {{- end }}
+            {{- end }}
+            {{- end }}
+
+            {{- with .Values.configMapEnv }}
+            {{- range . }}
+            - name: {{ .name }}
+              valueFrom:
+                {{- if .configMapKeyRef }}
+                configMapKeyRef:
+                  {{- toYaml .configMapKeyRef | nindent 18 }}
+                {{- end }}
+            {{- end }}
+            {{- end }}
+
+          {{- with .Values.extraEnvFromSecrets }}
+          envFrom:
+            {{- range . }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+
+          {{- end }}
+
+          {{- with .Values.extraEnvFromConfigMaps }}
+          {{- if not (or $.Values.extraEnvFromSecrets) }}
+          envFrom:
+          {{- end }}
+            {{- range . }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+          {{- end }}
+
+          volumeMounts:
+            {{- if .Values.persistence.config.enabled }}
+            - name: config
+              mountPath: /config
+            {{- end }}
+
+            - name: stump-config
+              mountPath: /config/Stump.toml
+              subPath: Stump.toml
+              readOnly: false
+
+            {{- if .Values.persistence.data.enabled }}
+            - name: data
+              mountPath: /data
+            {{- end }}
+
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold }}
+          {{- end }}
+
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold }}
+          {{- end }}
+
+          {{- if .Values.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: http
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+            successThreshold: {{ .Values.probes.startup.successThreshold }}
+          {{- end }}
+
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+      volumes:
+        - name: stump-config
+          configMap:
+            name: {{ include "stump.fullname" . }}
+
+        {{- if and .Values.persistence.config.enabled .Values.persistence.config.existingClaim }}
+        - name: config
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.config.existingClaim }}
+        {{- end }}
+
+        {{- if and .Values.persistence.data.enabled .Values.persistence.data.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.data.existingClaim }}
+        {{- end }}
+
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+  {{- if or
+        (and .Values.persistence.config.enabled (not .Values.persistence.config.existingClaim))
+        (and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim))
+  }}
+  volumeClaimTemplates:
+
+    {{- if and .Values.persistence.config.enabled (not .Values.persistence.config.existingClaim) }}
+    - metadata:
+        name: config
+        labels:
+          {{- include "stump.labels" . | nindent 10 }}
+        {{- with .Values.persistence.config.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- toYaml .Values.persistence.config.accessModes | nindent 10 }}
+        {{- if .Values.persistence.config.storageClass }}
+        storageClassName: {{ .Values.persistence.config.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.config.size }}
+    {{- end }}
+
+    {{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
+    - metadata:
+        name: data
+        labels:
+          {{- include "stump.labels" . | nindent 10 }}
+        {{- with .Values.persistence.data.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+          {{- toYaml .Values.persistence.data.accessModes | nindent 10 }}
+        {{- if .Values.persistence.data.storageClass }}
+        storageClassName: {{ .Values.persistence.data.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.data.size }}
+    {{- end }}
+
+  {{- end }}
