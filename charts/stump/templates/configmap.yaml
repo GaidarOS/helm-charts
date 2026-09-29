@@ -11,7 +11,6 @@ data:
     port = {{ .Values.config.port }}
     verbosity = {{ .Values.config.verbosity }}
     pretty_logs = {{ .Values.config.prettyLogs }}
-    colorful_logs = {{ .Values.config.colorfulLogs }}
     {{- if .Values.config.dbPath }}
     db_path = {{ .Values.config.dbPath | quote }}
     {{- end }}

@@ -186,11 +186,11 @@ spec:
           volumeMounts:
             {{- if .Values.persistence.config.enabled }}
             - name: config
-              mountPath: /config
+              mountPath: {{ .Values.config.configDir | quote }}
             {{- end }}
 
             - name: stump-config
-              mountPath: /config/Stump.toml
+              mountPath: {{ .Values.config.configDir | quote }}/Stump.toml
               subPath: Stump.toml
               readOnly: false
 

@@ -1,0 +1,21 @@
+apiVersion: v2
+name: calibre-web-automated
+description: Helm chart for Calibre-Web-Automated
+type: application
+
+version: 0.1.1
+appVersion: "dev-429"
+
+home: https://github.com/crocodilestick/Calibre-Web-Automated
+sources:
+  - https://github.com/crocodilestick/Calibre-Web-Automated
+
+keywords:
+  - calibre
+  - calibre-web
+  - ebooks
+  - library
+  - books
+
+# I want to create a helm chart with a statefulset, a service, ingress and httproute for deploying https://github.com/crocodilestick/Calibre-Web-Automated.
+# Can you provide the manifests and also include metadata for namespace on the manifests? Also could you add all the available values for completion's sake?
