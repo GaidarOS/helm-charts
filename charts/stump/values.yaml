@@ -33,7 +33,6 @@ config:
 
   verbosity: 1
   prettyLogs: true
-  colorfulLogs: false
 
   # Optional custom SQLite database path.
   dbPath: ""
