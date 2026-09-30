@@ -16,6 +16,3 @@ keywords:
   - ebooks
   - library
   - books
-
-# I want to create a helm chart with a statefulset, a service, ingress and httproute for deploying https://github.com/crocodilestick/Calibre-Web-Automated.
-# Can you provide the manifests and also include metadata for namespace on the manifests? Also could you add all the available values for completion's sake?
